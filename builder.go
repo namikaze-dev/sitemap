@@ -21,16 +21,20 @@ type URL struct {
 
 type HttpGet func(url string) ([]byte, error)
 
-func FetchLinks(URL string, get HttpGet) ([]URL, error) {
+func FetchLinks(URL string, depth int, get HttpGet) ([]URL, error) {
 	baseURL, err := url.Parse(URL)
 	if err != nil {
 		return nil, err
 	}
 	visited := map[string]bool{}
-	return crawl(baseURL, URL, visited, get)
+	return crawl(baseURL, URL, depth, visited, get)
 }
 
-func crawl(base *url.URL, url string, visited map[string]bool, get HttpGet) ([]URL, error) {
+func crawl(base *url.URL, url string, depth int, visited map[string]bool, get HttpGet) ([]URL, error) {
+	if depth < 0 {
+		return nil, nil
+	}
+
 	fetched := []URL{{Location: url}}
 	visited[url] = true
 
@@ -50,7 +54,7 @@ func crawl(base *url.URL, url string, visited map[string]bool, get HttpGet) ([]U
 				continue
 			}
 
-			extra, err := crawl(base, norm, visited, get)
+			extra, err := crawl(base, norm, depth-1, visited, get)
 			if err != nil {
 				return fetched, err
 			}

@@ -34,20 +34,38 @@ func TestMapToXML(t *testing.T) {
 }
 
 func TestFetchLinks(t *testing.T) {
-	url := "http://www.example.com"
-	got, err := main.FetchLinks(url, httpGetMock)
-	if err != nil {
-		t.Fatalf("unexpected error from fetch links: %v", err)
-	}
+	t.Run("success with no depth limit", func(t *testing.T) {
+		url := "http://www.example.com"
+		got, err := main.FetchLinks(url, 2, httpGetMock)
+		if err != nil {
+			t.Fatalf("unexpected error from fetch links: %v", err)
+		}
 
-	want := []main.URL{
-		{Location: "http://www.example.com"},
-		{Location: "http://www.example.com/dogs"},
-		{Location: "http://www.example.com/cats"},
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %#v want %#v", got, want)
-	}
+		want := []main.URL{
+			{Location: "http://www.example.com"},
+			{Location: "http://www.example.com/dogs"},
+			{Location: "http://www.example.com/cats"},
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %#v want %#v", got, want)
+		}
+	})
+
+	t.Run("success with depth limit", func(t *testing.T) {
+		url := "http://www.example.com"
+		got, err := main.FetchLinks(url, 1, httpGetMock)
+		if err != nil {
+			t.Fatalf("unexpected error from fetch links: %v", err)
+		}
+
+		want := []main.URL{
+			{Location: "http://www.example.com"},
+			{Location: "http://www.example.com/dogs"},
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %#v want %#v", got, want)
+		}
+	})
 }
 
 func httpGetMock(url string) ([]byte, error) {
