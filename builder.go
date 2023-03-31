@@ -1,6 +1,13 @@
 package main
 
-import "encoding/xml"
+import (
+	"bytes"
+	"encoding/xml"
+	"net/url"
+	"strings"
+
+	"github.com/namikaze-dev/link"
+)
 
 type UrlSet struct {
 	XMLName xml.Name `xml:"urlset"`
@@ -12,8 +19,65 @@ type URL struct {
 	Location string `xml:"loc"`
 }
 
+type HttpGet func(url string) ([]byte, error)
+
+func FetchLinks(URL string, get HttpGet) ([]URL, error) {
+	baseURL, err := url.Parse(URL)
+	if err != nil {
+		return nil, err
+	}
+	visited := map[string]bool{}
+	return crawl(baseURL, URL, visited, get)
+}
+
+func crawl(base *url.URL, url string, visited map[string]bool, get HttpGet) ([]URL, error) {
+	fetched := []URL{{Location: url}}
+	visited[url] = true
+
+	html, err := get(url)
+	if err != nil {
+		return fetched, err
+	}
+
+	links, err := link.Parse(bytes.NewReader(html))
+	if err != nil {
+		return fetched, err
+	}
+
+	for _, link := range links {
+		if norm, ok := sameDomain(base, link.Href); ok {
+			if visited[norm] {
+				continue
+			}
+
+			extra, err := crawl(base, norm, visited, get)
+			if err != nil {
+				return fetched, err
+			}
+			fetched = append(fetched, extra...)
+		}
+	}
+	return fetched, nil
+}
+
+func sameDomain(base *url.URL, curr string) (string, bool) {
+	if curr == "" {
+		return "", false
+	}
+	curr = normaliseFromBase(base, curr)
+	return curr, strings.HasPrefix(curr, base.Scheme+"://"+base.Host)
+}
+
+func normaliseFromBase(base *url.URL, curr string) string {
+	if curr[0] == '/' {
+		return base.Scheme+"://"+base.Host+curr
+	} else {
+		return curr
+	}
+}
+
 type MapOptions struct {
-	URLs []URL
+	URLs  []URL
 	XMLNs string
 }
 

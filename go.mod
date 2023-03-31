@@ -1,4 +1,4 @@
-module gitub.com/namikaze-dev/sitemap
+module github.com/namikaze-dev/sitemap
 
 go 1.19
 
