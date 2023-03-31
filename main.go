@@ -24,7 +24,7 @@ func main() {
 		panic(err)
 	}
 
-	xml, err := MapToXML(MapOptions{URLs: urls})
+	xml, err := MapToXML(MapOption{URLs: urls})
 	if err != nil {
 		panic(err)
 	}

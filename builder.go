@@ -19,8 +19,14 @@ type URL struct {
 	Location string `xml:"loc"`
 }
 
+// Type HttpGet is a function to retreve the content of 
+// the page in url. 
 type HttpGet func(url string) ([]byte, error)
 
+// FetchLinks uses URL as a starting points and crawls URL with a max
+// depth of depth using get as the injected function to retrieve the 
+// content of a url. if get returns any error, that error is returned
+// along side all the fetched urls up untill the point of error.
 func FetchLinks(URL string, depth int, get HttpGet) ([]URL, error) {
 	baseURL, err := url.Parse(URL)
 	if err != nil {
@@ -30,6 +36,7 @@ func FetchLinks(URL string, depth int, get HttpGet) ([]URL, error) {
 	return crawl(baseURL, URL, depth, visited, get)
 }
 
+// crawl recursively visits url, keeping track of depth and visited urls.
 func crawl(base *url.URL, url string, depth int, visited map[string]bool, get HttpGet) ([]URL, error) {
 	if depth < 0 {
 		return nil, nil
@@ -80,12 +87,17 @@ func normaliseFromBase(base *url.URL, curr string) string {
 	}
 }
 
-type MapOptions struct {
+// URLs represents a slice of fetched urls to be mapped.
+// XMLNs is an optional field the determines the sitemap
+// protocal version.
+type MapOption struct {
 	URLs  []URL
 	XMLNs string
 }
 
-func MapToXML(opt MapOptions) ([]byte, error) {
+// MapToXML takes a MapOption and generates an xml
+// representation compliant with the sitemaps.orgs protocal.
+func MapToXML(opt MapOption) ([]byte, error) {
 	if opt.XMLNs == "" {
 		opt.XMLNs = "http://www.sitemaps.org/schemas/sitemap/0.9"
 	}

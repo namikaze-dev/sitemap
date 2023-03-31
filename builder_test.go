@@ -13,7 +13,7 @@ func TestMapToXML(t *testing.T) {
 		{Location: "http://www.example.com/dogs"},
 	}
 
-	got, err := main.MapToXML(main.MapOptions{URLs: urls})
+	got, err := main.MapToXML(main.MapOption{URLs: urls})
 	if err != nil {
 		t.Fatal(err)
 	}
